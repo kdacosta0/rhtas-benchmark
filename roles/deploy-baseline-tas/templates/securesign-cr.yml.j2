@@ -38,6 +38,8 @@ spec:
     monitoring:
       enabled: {{ components.rekor.monitoring_enabled }}
     replicas: 1
+    attestations:
+      enabled: false
 
   trillian:
     monitoring:

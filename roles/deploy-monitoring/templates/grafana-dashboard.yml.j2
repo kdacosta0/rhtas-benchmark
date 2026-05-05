@@ -343,7 +343,7 @@ spec:
                 "description": "CPU utilization per TAS component. Limits are hidden by default and can be toggled in the legend below.",
                 "targets": [
                     {
-                        "expr": "sum by (container) (rate(container_cpu_usage_seconds_total{namespace=\"{{ baseline_namespace }}\", container=~'ctlog|fulcio-server|rekor-server|trillian-.*|tsa-server|tuf-server'}[3m])) * 1000",
+                        "expr": "sum by (container) (rate(container_cpu_usage_seconds_total{namespace=\"{{ baseline_namespace }}\", container=~'ctlog|fulcio-server|rekor-server|trillian-.*|tsa-server'}[3m])) * 1000",
                         "refId": "A",
                         "legendFormat": "{% raw %}{{ container }}{% endraw %}"
                     }
@@ -381,7 +381,7 @@ spec:
                 "description": "Actual memory consumption in MB. Limits are hidden by default and can be toggled in the legend below.",
                 "targets": [
                     {
-                        "expr": "sum by (container) (container_memory_working_set_bytes{namespace=\"{{ baseline_namespace }}\", container=~'ctlog|fulcio-server|rekor-server|trillian-.*|tsa-server|tuf-server'}) / 1024 / 1024",
+                        "expr": "sum by (container) (container_memory_working_set_bytes{namespace=\"{{ baseline_namespace }}\", container=~'ctlog|fulcio-server|rekor-server|trillian-.*|tsa-server'}) / 1024 / 1024",
                         "refId": "A",
                         "legendFormat": "{% raw %}{{ container }}{% endraw %}"
                     }
@@ -742,6 +742,120 @@ spec:
                 }
             },
             {
+                "id":8,
+                "title":"Rekor API Latency (P99)",
+                "type":"timeseries",
+                "description":"99th percentile latency of Rekor API requests. High values indicate service degradation.",
+                "targets":[
+                    {
+                        "expr":"histogram_quantile(0.99, sum(rate(rekor_api_latency_bucket{namespace=\"{{ baseline_namespace }}\"}[1m])) by (le))",
+                        "refId":"A",
+                        "legendFormat":"P99 Latency"
+                    }
+                ],
+                "fieldConfig":{
+                    "defaults":{
+                        "unit":"s",
+                        "min":0,
+                        "custom":{
+                            "lineWidth":2,
+                            "drawStyle":"line"
+                        }
+                    },
+                    "overrides":[
+                        {
+                            "matcher":{"id":"byName","options":"P99 Latency"},
+                            "properties":[
+                                {"id":"color","value":{"mode":"fixed","fixedColor":"#ff7f00"}}
+                            ]
+                        }
+                    ]
+                },
+                "options":{
+                    "tooltip":{"mode":"multi","shared":true},
+                    "legend":{"displayMode":"table","placement":"bottom","calcs":["max","mean","lastNotNull"],"fontSize":13}
+                },
+                "gridPos":{"h":10,"w":8,"x":0,"y":40}
+            },
+            {
+                "id":9,
+                "title":"HTTP 5xx Error Rate",
+                "type":"timeseries",
+                "description":"Rate of HTTP 5xx server errors across Fulcio and Rekor. Should be zero during normal operation.",
+                "targets":[
+                    {
+                        "expr":"sum by (job) (rate(http_requests_total{namespace=\"{{ baseline_namespace }}\",code=~\"5..\"}[1m]))",
+                        "refId":"A",
+                        "legendFormat":"{% raw %}{{ job }}{% endraw %}"
+                    }
+                ],
+                "fieldConfig":{
+                    "defaults":{
+                        "unit":"reqps",
+                        "min":0,
+                        "custom":{
+                            "lineWidth":2,
+                            "drawStyle":"line"
+                        }
+                    },
+                    "overrides":[
+                        {
+                            "matcher":{"id":"byName","options":"fulcio-server"},
+                            "properties":[
+                                {"id":"color","value":{"mode":"fixed","fixedColor":"#33a02c"}}
+                            ]
+                        },
+                        {
+                            "matcher":{"id":"byName","options":"rekor-server"},
+                            "properties":[
+                                {"id":"color","value":{"mode":"fixed","fixedColor":"#ff7f00"}}
+                            ]
+                        }
+                    ]
+                },
+                "options":{
+                    "tooltip":{"mode":"multi","shared":true},
+                    "legend":{"displayMode":"table","placement":"bottom","calcs":["max","mean","lastNotNull"],"fontSize":13}
+                },
+                "gridPos":{"h":10,"w":8,"x":8,"y":40}
+            },
+            {
+                "id":10,
+                "title":"Pod Restarts",
+                "type":"timeseries",
+                "description":"Container restart count per pod. Any increase indicates a CrashLoopBackOff or OOM kill.",
+                "targets":[
+                    {
+                        "expr":"sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"{{ baseline_namespace }}\"}[5m]))",
+                        "refId":"A",
+                        "legendFormat":"{% raw %}{{ pod }}{% endraw %}"
+                    }
+                ],
+                "fieldConfig":{
+                    "defaults":{
+                        "unit":"short",
+                        "min":0,
+                        "custom":{
+                            "lineWidth":2,
+                            "drawStyle":"line"
+                        }
+                    },
+                    "overrides":[
+                        {
+                            "matcher":{"id":"byRegexp","options":".*"},
+                            "properties":[
+                                {"id":"color","value":{"mode":"fixed","fixedColor":"#e31a1c"}}
+                            ]
+                        }
+                    ]
+                },
+                "options":{
+                    "tooltip":{"mode":"multi","shared":true},
+                    "legend":{"displayMode":"table","placement":"bottom","calcs":["max","mean","lastNotNull"],"fontSize":13}
+                },
+                "gridPos":{"h":10,"w":8,"x":16,"y":40}
+            },
+            {
                 "id":20,
                 "type":"row",
                 "title":"k6 Performance Test Metrics",
@@ -749,7 +863,7 @@ spec:
                     "h":1,
                     "w":24,
                     "x":0,
-                    "y":40
+                    "y":50
                 }
             },
             {
@@ -831,7 +945,7 @@ spec:
                     "h":8,
                     "w":6,
                     "x":0,
-                    "y":41
+                    "y":51
                 }
             },
             {
@@ -913,7 +1027,7 @@ spec:
                     "h":8,
                     "w":6,
                     "x":6,
-                    "y":41
+                    "y":51
                 }
             },
             {
@@ -995,7 +1109,7 @@ spec:
                     "h":8,
                     "w":6,
                     "x":12,
-                    "y":41
+                    "y":51
                 }
             },
             {
@@ -1081,7 +1195,7 @@ spec:
                     "h":8,
                     "w":6,
                     "x":18,
-                    "y":41
+                    "y":51
                 }
             }
         ]
