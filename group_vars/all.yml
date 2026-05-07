@@ -28,7 +28,7 @@ certificates:
 
 storage:
   tuf_size: "100Mi"
-  trillian_database_size: "10Gi"
+  trillian_database_size: "100Gi"
 
 resources:
   trillian_database:
